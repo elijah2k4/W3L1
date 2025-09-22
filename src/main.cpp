@@ -97,6 +97,7 @@ const char * deviceName = "Micro OLED";
 
 int yoffset;
 int conversion = false;
+int conversion2 = false; 
 float targetTemperature = 20.0;
 char degreeSys[] = "C"; 
 int pinButton1 = 10; 
@@ -233,8 +234,7 @@ float fToC(float degF) {
     return (degF - 32.0) * (5.0 / 9.0); 
 }
 
-void loop()
-{
+void loop() {
     if(digitalRead(pinButton1) && (!prevPressed)) {
         currentState = MachineStates(((int)currentState + 1) % 3); 
     } 
@@ -248,31 +248,38 @@ void loop()
 
         if (degreeSys[0] == 'F'){
                 temp = cToF(temp); 
-        }
-        if (degreeSys[0] == 'C' && conversion == true) {
-                temp = fToC(temp); 
-        }
-
-        sprintf(myNewText, "Tc: %.1f", temp);
-        myOLED.erase();
-        myOLED.text(3, yoffset, myNewText);
-
-        sprintf(myNewText, "Ttar: %.1f", targetTemperature);
-        myOLED.text(3, yoffset + 12, myNewText);
-        myOLED.display();
-
-        if (targetTemperature <= temp){
-            digitalWrite(ledPin, HIGH); 
-        }
-        else if (targetTemperature > temp){
-            digitalWrite(ledPin, LOW);
-        }        
-        
-    } else if (currentState == SetTemp){
-        sprintf(myNewText, "Ttar: %.1f", targetTemperature);
-        myOLED.erase();
-        myOLED.text(3, yoffset, myNewText);
-        myOLED.display();
+                if (conversion2 == true){
+                    targetTemperature = cToF(targetTemperature);
+                    conversion2 = false; 
+                }    
+            }
+        if (degreeSys[0] == 'C' && conversion2 == true) {
+                targetTemperature = fToC(targetTemperature);
+                conversion2 = false;
+                if (conversion == true){
+                    temp = fToC(temp);
+                }    
+            }
+            sprintf(myNewText, "Tc: %.1f", temp);
+            myOLED.erase(); 
+            myOLED.text(3, yoffset, myNewText);
+            
+            sprintf(myNewText, "Ttar: %.1f", targetTemperature);
+            myOLED.text(3, yoffset + 12, myNewText);
+            myOLED.display();
+            
+            if (targetTemperature <= temp){
+                digitalWrite(ledPin, HIGH); 
+            }
+            else if (targetTemperature > temp){
+                digitalWrite(ledPin, LOW);
+            } 
+        }       
+        else if (currentState == SetTemp){
+            sprintf(myNewText, "Ttar: %.1f", targetTemperature);
+            myOLED.erase();
+            myOLED.text(3, yoffset, myNewText);
+            myOLED.display();
         if (digitalRead(pinButtonUp) && (!prevUp)) {
             targetTemperature = targetTemperature + 0.5; 
             sprintf(myNewText, "Ttar: %.1f", targetTemperature);
@@ -290,9 +297,8 @@ void loop()
             myOLED.display();
         }            
         prevDown = digitalRead(pinButtonDown); 
-
-        
-    } else if (currentState == ChooseSystem){
+        }
+        else if (currentState == ChooseSystem){
         sprintf(myNewText, "System: %s", degreeSys); 
         myOLED.erase();
         myOLED.text(3, yoffset, myNewText);
@@ -310,6 +316,8 @@ void loop()
             myOLED.erase();
             myOLED.text(3, yoffset, myNewText);
             myOLED.display();
+            conversion2 = true;
+
         }
         prevUp = digitalRead(pinButtonUp); 
 
@@ -326,7 +334,8 @@ void loop()
             myOLED.erase();
             myOLED.text(3, yoffset, myNewText);
             myOLED.display();
+            conversion2 = true;
         }            
         prevDown = digitalRead(pinButtonDown); 
-    } 
-} 
+    }
+}
